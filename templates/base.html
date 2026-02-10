@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Сипсок Дел - Планировщик задач{% endblock %}</title>
+    
+    <!-- Стили -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Инлайн стили для предотвращения мерцания -->
+    <style>
+        body {
+            background: #f8fafc;
+            color: #1e293b;
+            opacity: 1;
+            transition: opacity 0.2s ease;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        [data-theme="dark"] body {
+            background: #0f172a;
+            color: #f1f5f9;
+        }
+        
+        .app-container {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            min-height: 100vh;
+            display: flex;
+        }
+        
+        .app-container.loaded {
+            opacity: 1;
+        }
+        
+        /* Быстрая инициализация для сайдбара */
+        .sidebar {
+            background: #1e293b;
+            color: white;
+        }
+        
+        [data-theme="dark"] .sidebar {
+            background: #0f172a;
+        }
+        
+        /* Быстрая инициализация для основного контента */
+        .main-content {
+            background: #f8fafc;
+        }
+        
+        [data-theme="dark"] .main-content {
+            background: #0f172a;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        {% if 'user_id' in session %}
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="app-logo">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Сипсок Дел</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('index') }}" class="nav-item active">
+                    <i class="fas fa-home"></i>
+                    <span>Главная</span>
+                </a>
+                
+                <div class="nav-section">Фильтры</div>
+                <a href="{{ url_for('index') }}?status=all" class="nav-item">
+                    <i class="fas fa-list"></i>
+                    <span>Все задачи</span>
+                    <span class="badge">
+                        {% if tasks %}
+                            {{ tasks|length }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </span>
+                </a>
+                <a href="{{ url_for('index') }}?status=active" class="nav-item">
+                    <i class="fas fa-clock"></i>
+                    <span>Активные</span>
+                    <span class="badge">
+                        {% if tasks %}
+                            {{ tasks|rejectattr('completed')|list|length }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </span>
+                </a>
+                <a href="{{ url_for('index') }}?status=completed" class="nav-item">
+                    <i class="fas fa-check"></i>
+                    <span>Выполненные</span>
+                    <span class="badge">
+                        {% if tasks %}
+                            {{ tasks|selectattr('completed')|list|length }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </span>
+                </a>
+                
+                <div class="nav-section">Категории</div>
+                {% for category in categories %}
+                <a href="{{ url_for('index') }}?category={{ category }}" class="nav-item">
+                    <i class="fas fa-folder"></i>
+                    <span>{{ category }}</span>
+                </a>
+                {% endfor %}
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="theme-switcher">
+                    <button onclick="toggleTheme()">
+                        <i class="fas fa-moon"></i>
+                        <span>Темная тема</span>
+                    </button>
+                </div>
+                
+                <div class="user-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">
+                            {% if tasks %}
+                                {{ tasks|length }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </span>
+                        <span class="stat-label">Всего</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">
+                            {% if tasks %}
+                                {{ tasks|rejectattr('completed')|list|length }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </span>
+                        <span class="stat-label">Активно</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">
+                            {% if tasks %}
+                                {{ tasks|selectattr('completed')|list|length }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </span>
+                        <span class="stat-label">Готово</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Main Content -->
+        <div class="main-content">
+            {% if 'user_id' in session %}
+            <header class="main-header">
+                <div class="header-left">
+                    <h1>{% block header %}Мои задачи{% endblock %}</h1>
+                </div>
+                <div class="header-right">
+                    <div class="sort-dropdown">
+                        <select onchange="window.location.href = window.location.pathname + '?sort=' + this.value">
+                            <option value="date" {% if sort_by == 'date' %}selected{% endif %}>По дате</option>
+                            <option value="priority" {% if sort_by == 'priority' %}selected{% endif %}>По приоритету</option>
+                            <option value="title" {% if sort_by == 'title' %}selected{% endif %}>По названию</option>
+                        </select>
+                    </div>
+                    <div class="user-menu">
+                        <span>{{ session['user_email'] }}</span>
+                        <a href="{{ url_for('profile') }}">Профиль</a>
+                        <a href="{{ url_for('logout') }}">Выйти</a>
+                    </div>
+                </div>
+            </header>
+            {% endif %}
+
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">
+                                {{ message|safe }}
+                                <button class="flash-close" onclick="this.parentElement.remove()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Быстрая установка темы до загрузки CSS
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            // Показываем контент после загрузки
+            setTimeout(() => {
+                document.querySelector('.app-container').classList.add('loaded');
+            }, 50);
+        });
+
+        // Плавные переходы при клике на ссылки
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a');
+            if (link && !link.closest('form') && !link.hasAttribute('onclick') && 
+                link.href.includes(window.location.hostname)) {
+                e.preventDefault();
+                document.body.style.opacity = '0.7';
+                setTimeout(() => {
+                    window.location.href = link.href;
+                }, 200);
+            }
+        });
+
+        // PWA регистрация
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+</body>
+</html>

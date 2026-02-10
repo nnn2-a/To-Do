@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block header %}Редактировать задачу{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="edit-form-container">
+        <form method="POST" class="task-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Название задачи *</label>
+                    <input type="text" name="title" value="{{ task.title }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Описание</label>
+                    <textarea name="description" rows="3">{{ task.description }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Категория</label>
+                    <select name="category">
+                        {% for category in categories %}
+                            <option value="{{ category }}" {% if task.category == category %}selected{% endif %}>
+                                {{ category }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Приоритет</label>
+                    <select name="priority">
+                        {% for priority in priorities %}
+                            <option value="{{ priority }}" {% if task.priority == priority %}selected{% endif %}>
+                                {{ priority }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Срок выполнения</label>
+                    <input type="date" name="due_date" value="{{ task.due_date if task.due_date }}">
+                </div>
+                <div class="form-group">
+                    <label>Напоминание</label>
+                    <input type="datetime-local" name="reminder" value="{{ task.reminder if task.reminder }}">
+                </div>
+                <div class="form-group">
+                    <label>Повторение</label>
+                    <select name="repeat">
+                        {% for option in repeat_options %}
+                            <option value="{{ option }}" {% if task.repeat == option %}selected{% endif %}>
+                                {{ option }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-save"></i> Сохранить изменения
+                </button>
+                <a href="{{ url_for('index') }}" class="btn-secondary">
+                    <i class="fas fa-times"></i> Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

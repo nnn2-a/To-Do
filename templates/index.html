@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-wrapper">
+    <!-- Quick Add Form -->
+    <div class="quick-add-card">
+        <form method="POST" action="{{ url_for('add_task') }}" class="quick-add-form">
+            <input type="text" name="title" placeholder="Что нужно сделать?" required class="quick-input">
+            <button type="submit" class="quick-add-btn">
+                <i class="fas fa-plus"></i>
+            </button>
+        </form>
+    </div>
+
+    <!-- Extended Add Form (collapsible) -->
+    <div class="extended-form-toggle" onclick="toggleExtendedForm()">
+        <i class="fas fa-plus-circle"></i>
+        <span>Добавить подробно</span>
+    </div>
+
+    <div class="extended-form" id="extendedForm" style="display: none;">
+        <form method="POST" action="{{ url_for('add_task') }}" class="task-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Название задачи *</label>
+                    <input type="text" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label>Описание</label>
+                    <textarea name="description" rows="3" placeholder="Дополнительные детали..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Категория</label>
+                    <select name="category">
+                        {% for category in categories %}
+                            <option value="{{ category }}">{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Приоритет</label>
+                    <select name="priority">
+                        {% for priority in priorities %}
+                            <option value="{{ priority }}">{{ priority }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Срок выполнения</label>
+                    <input type="date" name="due_date">
+                </div>
+                <div class="form-group">
+                    <label>Напоминание</label>
+                    <input type="datetime-local" name="reminder">
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">Добавить задачу</button>
+        </form>
+    </div>
+
+    <!-- Tasks List -->
+    <div class="tasks-container">
+        {% if tasks %}
+            <div class="tasks-header">
+                <h2>Задачи ({{ tasks|length }})</h2>
+                {% if tasks|selectattr('completed')|list|length > 0 %}
+                    <a href="{{ url_for('clear_completed') }}" class="clear-completed" onclick="return confirm('Очистить все выполненные задачи?')">
+                        <i class="fas fa-trash"></i> Очистить выполненные
+                    </a>
+                {% endif %}
+            </div>
+
+            <div class="tasks-list">
+                {% for task in tasks %}
+                    <div class="task-card {% if task.completed %}completed{% endif %} priority-{{ task.priority|lower }}">
+                        <div class="task-checkbox">
+                            <input type="checkbox" {% if task.completed %}checked{% endif %} 
+                                   onchange="window.location.href='{{ url_for("complete_task", task_id=task.id) }}'">
+                        </div>
+                        
+                        <div class="task-content">
+                            <div class="task-header">
+                                <h3 class="task-title">{{ task.title }}</h3>
+                                <div class="task-priority priority-{{ task.priority|lower }}">
+                                    {{ task.priority }}
+                                </div>
+                            </div>
+                            
+                            {% if task.description %}
+                                <p class="task-description">{{ task.description }}</p>
+                            {% endif %}
+                            
+                            <div class="task-meta">
+                                {% if task.category %}
+                                    <span class="task-category">
+                                        <i class="fas fa-folder"></i> {{ task.category }}
+                                    </span>
+                                {% endif %}
+                                
+                                {% if task.due_date %}
+                                    <span class="task-due {% if not task.completed and task.due_date < now.strftime('%Y-%m-%d') %}overdue{% endif %}">
+                                        <i class="fas fa-calendar"></i> {{ task.due_date }}
+                                    </span>
+                                {% endif %}
+                                
+                                <span class="task-created">
+                                    <i class="fas fa-clock"></i> {{ task.created_at[:10] }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="task-actions">
+                            <a href="{{ url_for('edit_task', task_id=task.id) }}" class="btn-icon" title="Редактировать">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{{ url_for('delete_task', task_id=task.id) }}" class="btn-icon btn-danger" 
+                               title="Удалить" onclick="return confirm('Удалить эту задачу?')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3>Нет задач</h3>
+                <p>Добавьте свою первую задачу, чтобы начать планирование</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function toggleExtendedForm() {
+    const form = document.getElementById('extendedForm');
+    if (form.style.display === 'none' || form.style.display === '') {
+        form.style.display = 'block';
+    } else {
+        form.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

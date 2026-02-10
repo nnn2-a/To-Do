@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block header %}Профиль пользователя{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="profile-card">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <div class="profile-info">
+                <h2>{{ session['user_email'] }}</h2>
+                <p>Зарегистрирован: {{ current_time }}</p>
+            </div>
+        </div>
+        
+        <div class="profile-stats">
+            <h3>Статистика</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">{{ stats.total }}</span>
+                    <span class="stat-label">Всего задач</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ stats.completed }}</span>
+                    <span class="stat-label">Выполнено</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ stats.active }}</span>
+                    <span class="stat-label">Активных</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="profile-actions">
+            <a href="{{ url_for('logout') }}" class="btn-danger">
+                <i class="fas fa-sign-out-alt"></i> Выйти
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
